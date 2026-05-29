@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grievance Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --card: #1c2028;
+    --border: #252930;
+    --accent: #e8c547;
+    --accent2: #4fd1a5;
+    --danger: #f0624f;
+    --text: #e8eaf0;
+    --muted: #7a7f8e;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 230px;
+    background: var(--surface); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 0;
+    z-index: 100;
+  }
+  .logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo h1 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; color: var(--accent); line-height: 1.2; }
+  .logo p { font-size: 11px; color: var(--muted); margin-top: 4px; letter-spacing: .05em; text-transform: uppercase; }
+  .nav { padding: 16px 0; flex: 1; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 20px; cursor: pointer; font-size: 14px; font-weight: 500;
+    color: var(--muted); transition: all .15s; border-left: 3px solid transparent;
+    user-select: none;
+  }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,.04); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(232,197,71,.06); }
+  .nav-item .icon { font-size: 18px; width: 22px; text-align: center; }
+  .user-badge {
+    margin: 0 16px 20px; padding: 12px 14px;
+    background: var(--card); border-radius: var(--radius); border: 1px solid var(--border);
+  }
+  .user-badge .name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .user-badge .role { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .logout-btn {
+    margin: 0 16px 16px; padding: 9px; text-align: center;
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 8px; cursor: pointer; font-size: 12px; color: var(--muted);
+    transition: all .15s;
+  }
+  .logout-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* ── Main ── */
+  .main { margin-left: 230px; padding: 32px; min-height: 100vh; }
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .page-header { margin-bottom: 28px; }
+  .page-header h2 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; }
+  .page-header p { color: var(--muted); margin-top: 4px; font-size: 14px; }
+
+  /* ── Auth ── */
+  #auth-page {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: var(--bg);
+  }
+  .auth-box {
+    width: 400px; background: var(--surface); border-radius: 16px;
+    border: 1px solid var(--border); padding: 40px; animation: fadeIn .3s ease;
+  }
+  .auth-logo { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--accent); margin-bottom: 6px; }
+  .auth-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+  .auth-tabs { display: flex; gap: 0; margin-bottom: 24px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .auth-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--muted); transition: all .15s; }
+  .auth-tab.active { background: var(--accent); color: #000; font-weight: 700; }
+
+  /* ── Forms ── */
+  .form-group { margin-bottom: 16px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; letter-spacing: .04em; text-transform: uppercase; }
+  input, select, textarea {
+    width: 100%; padding: 11px 14px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 14px; font-family: 'DM Sans', sans-serif;
+    transition: border-color .15s; outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 100px; }
+  select option { background: var(--card); }
+  .btn {
+    padding: 11px 20px; border-radius: 8px; border: none;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all .15s;
+  }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: #f0d060; }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-full { width: 100%; }
+
+  /* ── Stats grid ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 20px; transition: border-color .15s;
+  }
+  .stat-card:hover { border-color: var(--accent); }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+  .stat-val { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; color: var(--text); }
+  .stat-val.accent { color: var(--accent); }
+  .stat-val.green { color: var(--accent2); }
+  .stat-val.red { color: var(--danger); }
+
+  /* ── Table ── */
+  .table-wrap { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+  .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .table-header h3 { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+  .filters { display: flex; gap: 8px; }
+  .filters select { padding: 7px 10px; font-size: 12px; min-width: 120px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .05em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  td { padding: 13px 16px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,.04); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+  .empty-row td { text-align: center; color: var(--muted); padding: 40px; }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase;
+  }
+  .badge-submitted  { background: rgba(122,127,142,.2); color: #a0a5b5; }
+  .badge-ai_analyzed { background: rgba(79,209,165,.15); color: var(--accent2); }
+  .badge-assigned   { background: rgba(232,197,71,.15); color: var(--accent); }
+  .badge-in_progress { background: rgba(100,149,237,.2); color: #7dabf5; }
+  .badge-resolved   { background: rgba(79,209,165,.2); color: var(--accent2); }
+  .badge-closed     { background: rgba(122,127,142,.15); color: var(--muted); }
+  .badge-rejected   { background: rgba(240,98,79,.15); color: var(--danger); }
+  .badge-low        { background: rgba(79,209,165,.15); color: var(--accent2); }
+  .badge-medium     { background: rgba(232,197,71,.15); color: var(--accent); }
+  .badge-high       { background: rgba(240,150,79,.2); color: #f0965f; }
+  .badge-critical   { background: rgba(240,98,79,.2); color: var(--danger); }
+  .badge-positive   { background: rgba(79,209,165,.15); color: var(--accent2); }
+  .badge-negative   { background: rgba(232,197,71,.15); color: var(--accent); }
+  .badge-critical-s { background: rgba(240,98,79,.2); color: var(--danger); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7);
+    z-index: 200; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; animation: fadeIn .15s ease; }
+  .modal {
+    background: var(--surface); border-radius: 16px; border: 1px solid var(--border);
+    width: 540px; max-height: 85vh; overflow-y: auto; padding: 28px;
+  }
+  .modal h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+  /* ── History timeline ── */
+  .timeline { list-style: none; padding-left: 0; }
+  .timeline li { display: flex; gap: 14px; padding-bottom: 16px; }
+  .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 5px; }
+  .timeline-body .time { font-size: 11px; color: var(--muted); }
+  .timeline-body .note { font-size: 13px; margin-top: 2px; }
+  .timeline-body .by { font-size: 11px; color: var(--accent2); margin-top: 2px; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 20px; font-size: 13px; font-weight: 500;
+    transform: translateY(80px); opacity: 0;
+    transition: all .25s ease; z-index: 999; max-width: 320px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-color: var(--accent2); }
+  #toast.error   { border-color: var(--danger); }
+
+  /* ── AI card ── */
+  .ai-result {
+    background: rgba(232,197,71,.06); border: 1px solid rgba(232,197,71,.25);
+    border-radius: 10px; padding: 16px; margin-top: 16px;
+  }
+  .ai-result h4 { font-family: 'Syne', sans-serif; font-size: 13px; color: var(--accent); margin-bottom: 10px; }
+  .ai-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .ai-item .ai-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .ai-item .ai-val { font-size: 14px; font-weight: 600; color: var(--text); margin-top: 2px; }
+
+  /* ── Misc ── */
+  .search-bar { flex: 1; max-width: 280px; }
+  .search-bar input { padding: 8px 12px; font-size: 13px; }
+  .alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+  .alert-error { background: rgba(240,98,79,.12); border: 1px solid rgba(240,98,79,.3); color: #f0624f; }
+  .alert-success { background: rgba(79,209,165,.1); border: 1px solid rgba(79,209,165,.25); color: var(--accent2); }
+  .grievance-id { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: var(--accent); }
+  .truncate { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .action-link { background: none; border: none; color: var(--accent); font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0; }
+  .row-flex { display: flex; gap: 12px; }
+  .row-flex .form-group { flex: 1; }
+  .conf-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; }
+  .conf-fill { height: 100%; background: var(--accent2); border-radius: 2px; transition: width .4s ease; }
+  @media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ AUTH PAGE ═══════════════════ -->
+<div id="auth-page">
+  <div class="auth-box">
+    <div class="auth-logo">🏛️ GrievanceMS</div>
+    <div class="auth-sub">Public Grievance Management Portal</div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchAuthTab('login')">Login</div>
+      <div class="auth-tab" onclick="switchAuthTab('register')">Register</div>
+    </div>
+
+    <div id="login-form">
+      <div id="login-alert"></div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-pass" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()">Sign In</button>
+      <div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center">
+        Admin demo: <b>admin@grievance.gov</b> / <b>Admin@1234</b>
+      </div>
+    </div>
+
+    <div id="register-form" style="display:none">
+      <div id="reg-alert"></div>
+      <div class="row-flex">
+        <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Ravi Kumar"></div>
+        <div class="form-group"><label>Phone</label><input type="tel" id="reg-phone" placeholder="9876543210"></div>
+      </div>
+      <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@example.com"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="reg-pass" placeholder="Min 6 characters"></div>
+      <button class="btn btn-primary btn-full" onclick="doRegister()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ APP SHELL ═══════════════════ -->
+<div id="app" style="display:none">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">
+      <h1>🏛️ GrievanceMS</h1>
+      <p>Management Portal</p>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
+        <span class="icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" data-page="submit" onclick="showPage('submit')">
+        <span class="icon">✍️</span> Submit Grievance
+      </div>
+      <div class="nav-item" data-page="grievances" onclick="showPage('grievances')">
+        <span class="icon">📋</span> All Grievances
+      </div>
+      <div class="nav-item admin-only" data-page="export" onclick="exportCSV()" style="display:none">
+        <span class="icon">📥</span> Export CSV
+      </div>
+    </nav>
+    <div class="user-badge">
+      <div class="name" id="sidebar-name">—</div>
+      <div class="role" id="sidebar-role">Citizen</div>
+    </div>
+    <div class="logout-btn" onclick="logout()">Sign Out</div>
+  </div>
+
+  <!-- Main content -->
+  <div class="main">
+
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <h2>Dashboard</h2>
+        <p>Overview of all grievances and system status</p>
+      </div>
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total</div><div class="stat-val accent" id="s-total">—</div></div>
+        <div class="stat-card"><div class="stat-label">Submitted</div><div class="stat-val" id="s-submitted">—</div></div>
+        <div class="stat-card"><div class="stat-label">In Progress</div><div class="stat-val" id="s-inprogress">—</div></div>
+        <div class="stat-card"><div class="stat-label">Resolved</div><div class="stat-val green" id="s-resolved">—</div></div>
+        <div class="stat-card"><div class="stat-label">Critical</div><div class="stat-val red" id="s-critical">—</div></div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-header"><h3>Recent Grievances</h3></div>
+        <table>
+          <thead><tr>
+            <th>ID</th><th>Name</th><th>Location</th><th>Department</th>
+            <th>Priority</th><th>Status</th><th>Sentiment</th><th>Action</th>
+          </tr></thead>
+          <tbody id="recent-tbody"><tr class="empty-row"><td colspan="8">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Submit Grievance -->
+    <div id="page-submit" class="page">
+      <div class="page-header">
+        <h2>Submit a Grievance</h2>
+        <p>AI will automatically classify your complaint to the right department</p>
+      </div>
+      <div style="max-width:600px">
+        <div id="submit-alert"></div>
+        <div class="table-wrap" style="padding:24px">
+          <div class="row-flex">
+            <div class="form-group"><label>Your Name</label><input type="text" id="g-name" placeholder="Full name"></div>
+            <div class="form-group"><label>Phone</label><input type="tel" id="g-phone" placeholder="Optional"></div>
+          </div>
+          <div class="form-group"><label>Location / Area</label><input type="text" id="g-loc" placeholder="e.g. Koramangala, Bangalore"></div>
+          <div class="form-group">
+            <label>Describe Your Grievance</label>
+            <textarea id="g-desc" placeholder="Describe the issue in detail. The AI will classify and route it automatically…"></textarea>
+          </div>
+          <div id="ai-preview" style="display:none"></div>
+          <div style="display:flex;gap:10px;margin-top:4px">
+            <button class="btn btn-outline" onclick="previewAI()">🤖 Preview AI Classification</button>
+            <button class="btn btn-primary" onclick="submitGrievance()">Submit Grievance →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- All Grievances -->
+    <div id="page-grievances" class="page">
+      <div class="page-header">
+        <h2>Grievances</h2>
+        <p id="grievances-sub">All grievances in the system</p>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <h3>Grievance List</h3>
+          <div class="filters">
+            <div class="search-bar"><input type="text" id="search-input" placeholder="Search description…" oninput="filterTable()"></div>
+            <select id="filter-status" onchange="loadGrievances()">
+              <option value="">All Status</option>
+              <option value="submitted">Submitted</option>
+              <option value="ai_analyzed">AI Analyzed</option>
+              <option value="assigned">Assigned</option>
+              <option value="in_progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <select id="filter-priority" onchange="loadGrievances()">
+              <option value="">All Priority</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+        </div>
+        <table>
+          <thead><tr>
+            <th>ID</th><th>Name</th><th>Location</th><th>Description</th>
+            <th>Dept / AI</th><th>Priority</th><th>Status</th><th>Action</th>
+          </tr></thead>
+          <tbody id="grievances-tbody"><tr class="empty-row"><td colspan="8">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ═══════════════════ DETAIL MODAL ═══════════════════ -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal">
+    <h3>Grievance Detail</h3>
+    <div id="detail-content"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('detail-modal')">Close</button>
+      <button class="btn btn-primary admin-only" id="edit-btn" onclick="openEdit()" style="display:none">Edit / Update</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ EDIT MODAL ═══════════════════ -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <h3>Update Grievance</h3>
+    <div id="edit-alert"></div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="edit-status">
+        <option value="">— no change —</option>
+        <option value="assigned">Assigned</option>
+        <option value="in_progress">In Progress</option>
+        <option value="resolved">Resolved</option>
+        <option value="closed">Closed</option>
+        <option value="rejected">Rejected</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Priority</label>
+      <select id="edit-priority">
+        <option value="">— no change —</option>
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+        <option value="critical">Critical</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Assigned To</label>
+      <input type="text" id="edit-assigned" placeholder="Officer name">
+    </div>
+    <div class="form-group">
+      <label>Resolution Note</label>
+      <textarea id="edit-note" placeholder="Add a resolution note…"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('edit-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUpdate()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ TOAST ═══════════════════ -->
+<div id="toast"></div>
+
+<script>
+const API = "http://localhost:8000";
+let token = localStorage.getItem("grv_token") || "";
+let currentUser = JSON.parse(localStorage.getItem("grv_user") || "null");
+let currentGrievanceId = null;
+let allRows = [];
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function toast(msg, type = "success") {
+  const el = document.getElementById("toast");
+  el.textContent = (type === "success" ? "✅ " : "❌ ") + msg;
+  el.className = "show " + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = "", 3000);
+}
+
+function api(path, opts = {}) {
+  return fetch(API + path, {
+    ...opts,
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: "Bearer " + token } : {}), ...opts.headers },
+  }).then(async r => {
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.detail || r.statusText);
+    return data;
+  });
+}
+
+function badge(val, type) {
+  const cls = type === "status" ? `badge-${val}` : `badge-${val}`;
+  return `<span class="badge ${cls}">${val.replace("_", " ")}</span>`;
+}
+
+function fmt(dt) {
+  if (!dt) return "—";
+  return new Date(dt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function setAlert(id, msg, type = "error") {
+  document.getElementById(id).innerHTML = msg
+    ? `<div class="alert alert-${type}">${msg}</div>` : "";
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove("open");
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
+function switchAuthTab(t) {
+  document.querySelectorAll(".auth-tab").forEach((el, i) => {
+    el.classList.toggle("active", (i === 0 && t === "login") || (i === 1 && t === "register"));
+  });
+  document.getElementById("login-form").style.display = t === "login" ? "block" : "none";
+  document.getElementById("register-form").style.display = t === "register" ? "block" : "none";
+}
+
+async function doLogin() {
+  setAlert("login-alert", "");
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-pass").value;
+  try {
+    const data = await api("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+    token = data.access_token;
+    currentUser = data.user;
+    localStorage.setItem("grv_token", token);
+    localStorage.setItem("grv_user", JSON.stringify(currentUser));
+    initApp();
+  } catch (e) { setAlert("login-alert", e.message); }
+}
+
+async function doRegister() {
+  setAlert("reg-alert", "");
+  const payload = {
+    name: document.getElementById("reg-name").value.trim(),
+    email: document.getElementById("reg-email").value.trim(),
+    phone: document.getElementById("reg-phone").value.trim() || null,
+    password: document.getElementById("reg-pass").value,
+  };
+  try {
+    const data = await api("/auth/register", { method: "POST", body: JSON.stringify(payload) });
+    token = data.access_token;
+    currentUser = data.user;
+    localStorage.setItem("grv_token", token);
+    localStorage.setItem("grv_user", JSON.stringify(currentUser));
+    initApp();
+  } catch (e) { setAlert("reg-alert", e.message); }
+}
+
+function logout() {
+  token = ""; currentUser = null;
+  localStorage.removeItem("grv_token"); localStorage.removeItem("grv_user");
+  document.getElementById("app").style.display = "none";
+  document.getElementById("auth-page").style.display = "flex";
+}
+
+// ── App Shell ─────────────────────────────────────────────────────────────────
+
+function initApp() {
+  document.getElementById("auth-page").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  document.getElementById("sidebar-name").textContent = currentUser.name;
+  document.getElementById("sidebar-role").textContent = currentUser.is_admin ? "🔑 Administrator" : "👤 Citizen";
+
+  // Show admin-only elements
+  document.querySelectorAll(".admin-only").forEach(el => {
+    el.style.display = currentUser.is_admin ? "" : "none";
+  });
+
+  loadDashboard();
+  showPage("dashboard");
+}
+
+function showPage(page) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("page-" + page).classList.add("active");
+  document.querySelector(`[data-page="${page}"]`)?.classList.add("active");
+
+  if (page === "grievances") loadGrievances();
+  if (page === "dashboard") loadDashboard();
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+
+async function loadDashboard() {
+  if (!currentUser?.is_admin) {
+    loadMyGrievancesForDashboard();
+    return;
+  }
+  try {
+    const d = await api("/admin/dashboard");
+    document.getElementById("s-total").textContent = d.total;
+    document.getElementById("s-submitted").textContent = d.submitted;
+    document.getElementById("s-inprogress").textContent = d.in_progress;
+    document.getElementById("s-resolved").textContent = d.resolved;
+    document.getElementById("s-critical").textContent = d.critical;
+    renderRecentTable(d.recent);
+  } catch (e) { toast(e.message, "error"); }
+}
+
+async function loadMyGrievancesForDashboard() {
+  try {
+    const items = await api("/grievances?limit=10");
+    document.getElementById("s-total").textContent = items.length;
+    document.getElementById("s-submitted").textContent = items.filter(g => g.status === "submitted" || g.status === "ai_analyzed").length;
+    document.getElementById("s-inprogress").textContent = items.filter(g => g.status === "in_progress").length;
+    document.getElementById("s-resolved").textContent = items.filter(g => g.status === "resolved").length;
+    document.getElementById("s-critical").textContent = items.filter(g => g.priority === "critical").length;
+    renderRecentTable(items);
+  } catch (e) {}
+}
+
+function renderRecentTable(items) {
+  const tb = document.getElementById("recent-tbody");
+  if (!items.length) { tb.innerHTML = '<tr class="empty-row"><td colspan="8">No grievances yet.</td></tr>'; return; }
+  tb.innerHTML = items.map(g => `
+    <tr>
+      <td><span class="grievance-id">${g.grievance_id}</span></td>
+      <td>${g.name}</td>
+      <td>${g.location}</td>
+      <td>${g.department || "—"}</td>
+      <td>${badge(g.priority, "priority")}</td>
+      <td>${badge(g.status, "status")}</td>
+      <td>${badge(g.ai_sentiment + (g.ai_sentiment === "critical" ? "-s" : ""), "sent")}</td>
+      <td><button class="action-link" onclick="openDetail('${g.grievance_id}')">View</button></td>
+    </tr>`).join("");
+}
+
+// ── Grievances List ────────────────────────────────────────────────────────────
+
+async function loadGrievances() {
+  const status   = document.getElementById("filter-status").value;
+  const priority = document.getElementById("filter-priority").value;
+  let url = "/grievances?limit=200";
+  if (status)   url += `&status=${status}`;
+  if (priority) url += `&priority=${priority}`;
+  try {
+    const items = await api(url);
+    allRows = items;
+    filterTable();
+  } catch (e) { toast(e.message, "error"); }
+}
+
+function filterTable() {
+  const q = document.getElementById("search-input").value.toLowerCase();
+  const filtered = allRows.filter(g =>
+    !q || g.description.toLowerCase().includes(q) ||
+          g.name.toLowerCase().includes(q) ||
+          g.location.toLowerCase().includes(q)
+  );
+  const tb = document.getElementById("grievances-tbody");
+  if (!filtered.length) { tb.innerHTML = '<tr class="empty-row"><td colspan="8">No grievances found.</td></tr>'; return; }
+  tb.innerHTML = filtered.map(g => `
+    <tr>
+      <td><span class="grievance-id">${g.grievance_id}</span></td>
+      <td>${g.name}</td>
+      <td>${g.location}</td>
+      <td class="truncate" title="${g.description}">${g.description.substring(0, 60)}…</td>
+      <td>${g.department || "—"}<br><small style="color:var(--muted);font-size:10px">${(g.ai_confidence*100).toFixed(0)}% conf</small></td>
+      <td>${badge(g.priority, "priority")}</td>
+      <td>${badge(g.status, "status")}</td>
+      <td><button class="action-link" onclick="openDetail('${g.grievance_id}')">View</button></td>
+    </tr>`).join("");
+}
+
+// ── Submit Grievance ───────────────────────────────────────────────────────────
+
+async function previewAI() {
+  const desc = document.getElementById("g-desc").value.trim();
+  if (!desc) { toast("Enter a description first", "error"); return; }
+  // Simple local keyword preview (actual AI runs on submit)
+  const keywords = {
+    "water|pipe|leak|flood": { dept: "Water Supply Board", cat: "Water Supply" },
+    "road|pothole|bridge": { dept: "Roads & Infrastructure Dept", cat: "Road & Infrastructure" },
+    "garbage|waste|sewage|sanitation": { dept: "Sanitation & Waste Dept", cat: "Sanitation & Waste" },
+    "electricity|power|light|transformer": { dept: "Electricity Department", cat: "Electricity" },
+    "police|crime|theft|safety": { dept: "Police & Safety Dept", cat: "Public Safety" },
+    "bus|transport|traffic": { dept: "Transport Authority", cat: "Transport" },
+  };
+  let dept = "General Administration", cat = "Other";
+  for (const [k, v] of Object.entries(keywords)) {
+    if (new RegExp(k, "i").test(desc)) { dept = v.dept; cat = v.cat; break; }
+  }
+  document.getElementById("ai-preview").style.display = "block";
+  document.getElementById("ai-preview").innerHTML = `
+    <div class="ai-result">
+      <h4>🤖 AI Preview (final classification on submit)</h4>
+      <div class="ai-grid">
+        <div class="ai-item"><div class="ai-label">Department</div><div class="ai-val">${dept}</div></div>
+        <div class="ai-item"><div class="ai-label">Category</div><div class="ai-val">${cat}</div></div>
+      </div>
+    </div>`;
+}
+
+async function submitGrievance() {
+  setAlert("submit-alert", "");
+  const payload = {
+    name: document.getElementById("g-name").value.trim(),
+    phone: document.getElementById("g-phone").value.trim() || null,
+    location: document.getElementById("g-loc").value.trim(),
+    description: document.getElementById("g-desc").value.trim(),
+  };
+  if (!payload.name || !payload.location || !payload.description) {
+    setAlert("submit-alert", "Please fill in all required fields.");
+    return;
+  }
+  try {
+    const g = await api("/grievances", { method: "POST", body: JSON.stringify(payload) });
+    document.getElementById("g-name").value = "";
+    document.getElementById("g-phone").value = "";
+    document.getElementById("g-loc").value = "";
+    document.getElementById("g-desc").value = "";
+    document.getElementById("ai-preview").style.display = "none";
+    setAlert("submit-alert", `Grievance <b>${g.grievance_id}</b> submitted! AI classified to <b>${g.department}</b>`, "success");
+    toast("Grievance submitted successfully!");
+    setTimeout(() => showPage("grievances"), 1800);
+  } catch (e) { setAlert("submit-alert", e.message); }
+}
+
+// ── Detail Modal ───────────────────────────────────────────────────────────────
+
+async function openDetail(gId) {
+  currentGrievanceId = gId;
+  try {
+    const g = await api(`/grievances/${gId}`);
+    const confPct = (g.ai_confidence * 100).toFixed(0);
+    document.getElementById("detail-content").innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div><div class="stat-label">Grievance ID</div><div style="font-family:Syne;color:var(--accent);font-weight:700">${g.grievance_id}</div></div>
+        <div><div class="stat-label">Submitted By</div><div>${g.name} ${g.phone ? `(${g.phone})` : ""}</div></div>
+        <div><div class="stat-label">Location</div><div>${g.location}</div></div>
+        <div><div class="stat-label">Submitted On</div><div>${fmt(g.created_at)}</div></div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <div style="background:var(--card);padding:12px;border-radius:8px;font-size:13px;line-height:1.6">${g.description}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+        <div><label>Status</label>${badge(g.status, "status")}</div>
+        <div><label>Priority</label>${badge(g.priority, "priority")}</div>
+        <div><label>Sentiment</label>${badge(g.ai_sentiment, "sent")}</div>
+      </div>
+      <div class="ai-result">
+        <h4>🤖 AI Classification Result</h4>
+        <div class="ai-grid">
+          <div class="ai-item"><div class="ai-label">Department</div><div class="ai-val">${g.department || "—"}</div></div>
+          <div class="ai-item"><div class="ai-label">Category</div><div class="ai-val">${g.category}</div></div>
+          <div class="ai-item">
+            <div class="ai-label">Confidence</div>
+            <div class="ai-val">${confPct}%</div>
+            <div class="conf-bar"><div class="conf-fill" style="width:${confPct}%"></div></div>
+          </div>
+          <div class="ai-item"><div class="ai-label">Assigned To</div><div class="ai-val">${g.assigned_to || "Unassigned"}</div></div>
+        </div>
+        ${g.resolution_note ? `<div style="margin-top:10px"><div class="ai-label">Resolution Note</div><div style="font-size:13px;margin-top:4px">${g.resolution_note}</div></div>` : ""}
+      </div>
+      ${g.history.length ? `
+      <div style="margin-top:16px">
+        <label>Activity History</label>
+        <ul class="timeline" style="margin-top:10px">
+          ${g.history.map(h => `
+            <li>
+              <div class="timeline-dot"></div>
+              <div class="timeline-body">
+                <div class="time">${fmt(h.created_at)}</div>
+                <div class="note">${h.note || h.status}</div>
+                <div class="by">by ${h.changed_by}</div>
+              </div>
+            </li>`).join("")}
+        </ul>
+      </div>` : ""}`;
+
+    if (currentUser?.is_admin) {
+      document.getElementById("edit-btn").style.display = "";
+    }
+    document.getElementById("detail-modal").classList.add("open");
+  } catch (e) { toast(e.message, "error"); }
+}
+
+function openEdit() {
+  closeModal("detail-modal");
+  document.getElementById("edit-status").value = "";
+  document.getElementById("edit-priority").value = "";
+  document.getElementById("edit-assigned").value = "";
+  document.getElementById("edit-note").value = "";
+  setAlert("edit-alert", "");
+  document.getElementById("edit-modal").classList.add("open");
+}
+
+async function saveUpdate() {
+  const payload = {};
+  const st = document.getElementById("edit-status").value;
+  const pr = document.getElementById("edit-priority").value;
+  const as = document.getElementById("edit-assigned").value.trim();
+  const no = document.getElementById("edit-note").value.trim();
+  if (st) payload.status = st;
+  if (pr) payload.priority = pr;
+  if (as) payload.assigned_to = as;
+  if (no) payload.resolution_note = no;
+  if (!Object.keys(payload).length) { setAlert("edit-alert", "No changes made."); return; }
+  try {
+    await api(`/grievances/${currentGrievanceId}`, { method: "PUT", body: JSON.stringify(payload) });
+    closeModal("edit-modal");
+    toast("Grievance updated!");
+    loadGrievances();
+    loadDashboard();
+  } catch (e) { setAlert("edit-alert", e.message); }
+}
+
+// ── Export ─────────────────────────────────────────────────────────────────────
+
+async function exportCSV() {
+  const url = API + "/admin/export";
+  const resp = await fetch(url, { headers: { Authorization: "Bearer " + token } });
+  if (!resp.ok) { toast("Export failed", "error"); return; }
+  const blob = await resp.blob();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "grievances.csv";
+  a.click();
+  toast("CSV exported!");
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+
+if (token && currentUser) {
+  initApp();
+} else {
+  document.getElementById("auth-page").style.display = "flex";
+}
+</script>
+</body>
+</html>
