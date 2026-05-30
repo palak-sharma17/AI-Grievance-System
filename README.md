@@ -161,7 +161,7 @@ Password: Admin@1234
 
 ---
 
-## 📖 API Reference
+## API Reference
 
 Full interactive docs available at: **http://localhost:8000/docs**
 
@@ -272,5 +272,5 @@ Pull requests are welcome! For major changes, please open an issue first.
 ---
 
 \
-📄 License
+  License
 This project is licensed under the MIT License.
